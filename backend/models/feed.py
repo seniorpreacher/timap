@@ -13,7 +13,7 @@ class Feed(Model):
     city_lng = FloatField(null=True)
 
     def __str__(self) -> str:
-        return '{id} - {title} ({cityName})'.format(id=self.id, title=self.title, cityName=self.city_name)
+        return '{s.id} - {s.title} ({s.cityName})'.format(s=self)
 
     class Meta:
         database = db

@@ -28,7 +28,7 @@ class Route(Model):
     feed = ForeignKeyField(Feed, null=False, related_name='routes')
 
     def __str__(self) -> str:
-        return '{id} - {route_id} ({short_name})'.format(id=self.id, route_id=self.route_id, short_name=self.short_name)
+        return '{s.id} - {s.route_id} ({s.short_name})'.format(s=self)
 
     class Meta:
         database = db

@@ -75,18 +75,15 @@ def update_from_feed(feed_id: str):
         zip_ref.extractall(ZIP_EXTRACT_FOLDER)
 
     extracted_txt_files = [x for x in os.listdir(ZIP_EXTRACT_FOLDER) if x.endswith(".txt")]
-    for file in extracted_txt_files:
-        actions = {
-            'agency.txt': gtfs.read_agency_txt,
-            'stops.txt': gtfs.read_stops_txt,
-            'routes.txt': gtfs.read_routes_txt,
-            'calendar_dates.txt': gtfs.read_calendar_dates_txt,
-        }
+    if 'agency.txt' in extracted_txt_files: gtfs.read_agency_txt(ZIP_EXTRACT_FOLDER, feed)
+    if 'stops.txt' in extracted_txt_files: gtfs.read_stops_txt(ZIP_EXTRACT_FOLDER, feed)
+    # if 'shapes.txt' in extracted_txt_files: gtfs.read_shapes_txt(ZIP_EXTRACT_FOLDER, feed)
+    if 'routes.txt' in extracted_txt_files: gtfs.read_routes_txt(ZIP_EXTRACT_FOLDER, feed)
+    if 'trips.txt' in extracted_txt_files: gtfs.read_trips_txt(ZIP_EXTRACT_FOLDER, feed)
 
-        if file in actions.keys():
-            actions[file](ZIP_EXTRACT_FOLDER, feed)
+    # if 'calendar_dates.txt' in extracted_txt_files: gtfs.read_calendar_dates_txt(ZIP_EXTRACT_FOLDER, feed)
 
-            # shutil.rmtree(ZIP_EXTRACT_FOLDER)
+    # shutil.rmtree(ZIP_EXTRACT_FOLDER)
 
 
 def download_file(url, feed_id):

@@ -14,7 +14,7 @@ class Stop(Model):
     feed = ForeignKeyField(Feed, null=False, related_name='stops')
 
     def __str__(self) -> str:
-        return '{id} - {stop_id} ({name})'.format(id=self.id, stop_id=self.stop_id, name=self.name)
+        return '{s.id} - {s.stop_id} ({s.name})'.format(s=self)
 
     class Meta:
         database = db

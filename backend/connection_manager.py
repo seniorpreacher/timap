@@ -15,12 +15,15 @@ def init_db():
     from backend.models.stop import Stop
     from backend.models.agency import Agency
     from backend.models.route import Route
-
+    from backend.models.shape import Shape
+    from backend.models.trip import Trip
     db.create_tables([
         Feed,
         Stop,
         Route,
         Agency,
+        Shape,
+        Trip,
     ], safe=True)
     db.close()
 

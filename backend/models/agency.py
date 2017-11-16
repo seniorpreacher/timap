@@ -17,7 +17,7 @@ class Agency(Model):
     feed = ForeignKeyField(Feed, null=False, related_name='agencies')
 
     def __str__(self) -> str:
-        return '{id}/{agency_id} - {name}'.format(id=self.id, agency_id=self.agency_id, name=self.name)
+        return '{s.id}/{s.agency_id} - {s.name}'.format(s=self)
 
     class Meta:
         database = db
