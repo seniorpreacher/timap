@@ -4,15 +4,19 @@ from backend.models.agency import Agency
 from backend.models.route import Route
 from backend.models.shape import Shape
 from backend.models.stop import Stop
+from backend.models.stop_time import StopTime
 from backend.models.trip import Trip
 
 
 def read_gtfs_file(path):
-    return [dict(line) for line in csv.DictReader(open(path, encoding='utf8'), skipinitialspace=True)]
+    reader = csv.DictReader(open(path, encoding='utf8'), skipinitialspace=True)
+    return [dict(line) for line in reader], reader.line_num - 1
 
 
 def read_agency_txt(folder, feed):
-    for data in read_gtfs_file(folder + '/agency.txt'):
+    reader = read_gtfs_file(folder + '/agency.txt')
+    print('agency.txt contains ' + str(reader[1]) + ' lines.')
+    for data in reader[0]:
         try:
             agency = Agency.get(name=data['agency_name'])
         except Agency.DoesNotExist:
@@ -32,7 +36,9 @@ def read_agency_txt(folder, feed):
 
 
 def read_stops_txt(folder, feed):
-    for data in read_gtfs_file(folder + '/stops.txt'):
+    reader = read_gtfs_file(folder + '/stops.txt')
+    print('stops.txt contains ' + str(reader[1]) + ' lines.')
+    for data in reader[0]:
         try:
             stop = Stop.get(
                 stop_id=data['stop_id'],
@@ -53,7 +59,9 @@ def read_stops_txt(folder, feed):
 
 
 def read_shapes_txt(folder, feed):
-    for data in read_gtfs_file(folder + '/shapes.txt'):
+    reader = read_gtfs_file(folder + '/shapes.txt')
+    print('shapes.txt contains ' + str(reader[1]) + ' lines.')
+    for data in reader[0]:
         try:
             shape = Shape.get(
                 shape_id=data['shape_id'],
@@ -74,7 +82,9 @@ def read_shapes_txt(folder, feed):
 
 
 def read_routes_txt(folder, feed):
-    for data in read_gtfs_file(folder + '/routes.txt'):
+    reader = read_gtfs_file(folder + '/routes.txt')
+    print('routes.txt contains ' + str(reader[1]) + ' lines.')
+    for data in reader[0]:
         if 'route_short_name' not in data:
             data['route_short_name'] = data['route_long_name']
         if 'route_long_name' not in data:
@@ -111,7 +121,9 @@ def read_routes_txt(folder, feed):
 
 
 def read_trips_txt(folder, feed):
-    for data in read_gtfs_file(folder + '/trips.txt'):
+    reader = read_gtfs_file(folder + '/trips.txt')
+    print('trips.txt contains ' + str(reader[1]) + ' lines.')
+    for data in reader[0]:
         try:
             route = Route.get(
                 route_id=data['route_id'],
@@ -148,6 +160,48 @@ def read_trips_txt(folder, feed):
         trip.feed = feed
 
         trip.save()
+
+
+def read_stop_times_txt(folder, feed):
+    reader = read_gtfs_file(folder + '/stop_times.txt')
+    print('stop_times.txt contains ' + str(reader[1]) + ' lines.')
+    for data in reader[0]:
+        try:
+            stop = Stop.get(
+                stop_id=data['stop_id'],
+                feed=feed,
+            )
+        except Stop.DoesNotExist:
+            print('not matching stop info for stop time: ' + data['stop_id'])
+            continue
+
+        try:
+            trip = Trip.get(
+                trip_id=data['trip_id'],
+                feed=feed,
+            )
+        except Trip.DoesNotExist:
+            print('not matching trip info for stop time: ' + data['trip_id'])
+            continue
+
+        try:
+            st = StopTime.get(
+                trip=trip,
+                stop=stop,
+            )
+        except StopTime.DoesNotExist:
+            st = StopTime()
+            st.trip = trip
+            st.stop = stop
+
+        st.arrival_time = data['arrival_time']
+        st.departure_time = data['departure_time']
+        st.stop_sequence = data['stop_sequence']
+        if 'stop_headsign' in data: st.stop_headsign = data['stop_headsign']
+        if 'shape_dist_traveled' in data: st.shape_dist_traveled = data['shape_dist_traveled']
+        st.feed = feed
+
+        st.save()
 
 
 def read_calendar_dates_txt(folder, feed):

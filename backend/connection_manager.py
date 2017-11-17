@@ -1,11 +1,13 @@
 import os
 
-from peewee import PostgresqlDatabase
+from playhouse.postgres_ext import PostgresqlExtDatabase
 
-db = PostgresqlDatabase(os.environ.get('MY_PSQL_DBNAME'),
-                        # host=os.environ.get('MY_PSQL_HOST'),
-                        user=os.environ.get('MY_PSQL_USER'),
-                        password=os.environ.get('MY_PSQL_PASSWORD'))
+db = PostgresqlExtDatabase(
+    os.environ.get('MY_PSQL_DBNAME'),
+    user=os.environ.get('MY_PSQL_USER'),
+    password=os.environ.get('MY_PSQL_PASSWORD'),
+    register_hstore=False,
+)
 
 
 def init_db():
@@ -17,6 +19,7 @@ def init_db():
     from backend.models.route import Route
     from backend.models.shape import Shape
     from backend.models.trip import Trip
+    from backend.models.stop_time import StopTime
     db.create_tables([
         Feed,
         Stop,
@@ -24,6 +27,7 @@ def init_db():
         Agency,
         Shape,
         Trip,
+        StopTime,
     ], safe=True)
     db.close()
 

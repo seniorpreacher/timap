@@ -75,11 +75,18 @@ def update_from_feed(feed_id: str):
         zip_ref.extractall(ZIP_EXTRACT_FOLDER)
 
     extracted_txt_files = [x for x in os.listdir(ZIP_EXTRACT_FOLDER) if x.endswith(".txt")]
+    print('Processing agency.txt')
     if 'agency.txt' in extracted_txt_files: gtfs.read_agency_txt(ZIP_EXTRACT_FOLDER, feed)
+    print('Processing stops.txt')
     if 'stops.txt' in extracted_txt_files: gtfs.read_stops_txt(ZIP_EXTRACT_FOLDER, feed)
-    # if 'shapes.txt' in extracted_txt_files: gtfs.read_shapes_txt(ZIP_EXTRACT_FOLDER, feed)
+    print('Processing shapes.txt')
+    if 'shapes.txt' in extracted_txt_files: gtfs.read_shapes_txt(ZIP_EXTRACT_FOLDER, feed)
+    print('Processing routes.txt')
     if 'routes.txt' in extracted_txt_files: gtfs.read_routes_txt(ZIP_EXTRACT_FOLDER, feed)
+    print('Processing trips.txt')
     if 'trips.txt' in extracted_txt_files: gtfs.read_trips_txt(ZIP_EXTRACT_FOLDER, feed)
+    print('Processing stop_times.txt')
+    if 'stop_times.txt' in extracted_txt_files: gtfs.read_stop_times_txt(ZIP_EXTRACT_FOLDER, feed)
 
     # if 'calendar_dates.txt' in extracted_txt_files: gtfs.read_calendar_dates_txt(ZIP_EXTRACT_FOLDER, feed)
 
