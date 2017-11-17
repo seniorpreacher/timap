@@ -31,6 +31,8 @@ def init_db():
     ], safe=True)
     db.close()
 
+    print('\nDB check succeeded!\n')
+
 #
 # def establish_connection(connection_data=None):
 #     """

@@ -1,6 +1,7 @@
 import csv
 
 from backend.models.agency import Agency
+from backend.models.progressbar import ProgressBar
 from backend.models.route import Route
 from backend.models.shape import Shape
 from backend.models.stop import Stop
@@ -15,8 +16,9 @@ def read_gtfs_file(path):
 
 def read_agency_txt(folder, feed):
     reader = read_gtfs_file(folder + '/agency.txt')
-    print('agency.txt contains ' + str(reader[1]) + ' lines.')
-    for data in reader[0]:
+    progress = ProgressBar(reader[1], 'agency.txt')
+    for line_number, data in enumerate(reader[0]):
+        progress.write()
         try:
             agency = Agency.get(name=data['agency_name'])
         except Agency.DoesNotExist:
@@ -33,12 +35,14 @@ def read_agency_txt(folder, feed):
         agency.feed = feed
 
         agency.save()
+    progress.clear('All agencies saved', leave_bar=True)
 
 
 def read_stops_txt(folder, feed):
     reader = read_gtfs_file(folder + '/stops.txt')
-    print('stops.txt contains ' + str(reader[1]) + ' lines.')
-    for data in reader[0]:
+    progress = ProgressBar(reader[1], 'stops.txt')
+    for line_number, data in enumerate(reader[0]):
+        progress.write()
         try:
             stop = Stop.get(
                 stop_id=data['stop_id'],
@@ -56,12 +60,14 @@ def read_stops_txt(folder, feed):
         stop.feed = feed
 
         stop.save()
+    progress.clear('All stops saved', leave_bar=True)
 
 
 def read_shapes_txt(folder, feed):
     reader = read_gtfs_file(folder + '/shapes.txt')
-    print('shapes.txt contains ' + str(reader[1]) + ' lines.')
-    for data in reader[0]:
+    progress = ProgressBar(reader[1], 'shapes.txt')
+    for line_number, data in enumerate(reader[0]):
+        progress.write()
         try:
             shape = Shape.get(
                 shape_id=data['shape_id'],
@@ -79,12 +85,14 @@ def read_shapes_txt(folder, feed):
         shape.feed = feed
 
         shape.save()
+    progress.clear('All shapes saved', leave_bar=True)
 
 
 def read_routes_txt(folder, feed):
     reader = read_gtfs_file(folder + '/routes.txt')
-    print('routes.txt contains ' + str(reader[1]) + ' lines.')
-    for data in reader[0]:
+    progress = ProgressBar(reader[1], 'routes.txt')
+    for line_number, data in enumerate(reader[0]):
+        progress.write()
         if 'route_short_name' not in data:
             data['route_short_name'] = data['route_long_name']
         if 'route_long_name' not in data:
@@ -118,12 +126,14 @@ def read_routes_txt(folder, feed):
         route.feed = feed
 
         route.save()
+    progress.clear('All routes saved', leave_bar=True)
 
 
 def read_trips_txt(folder, feed):
     reader = read_gtfs_file(folder + '/trips.txt')
-    print('trips.txt contains ' + str(reader[1]) + ' lines.')
-    for data in reader[0]:
+    progress = ProgressBar(reader[1], 'trips.txt')
+    for line_number, data in enumerate(reader[0]):
+        progress.write()
         try:
             route = Route.get(
                 route_id=data['route_id'],
@@ -160,12 +170,14 @@ def read_trips_txt(folder, feed):
         trip.feed = feed
 
         trip.save()
+    progress.clear('All trips saved', leave_bar=True)
 
 
 def read_stop_times_txt(folder, feed):
     reader = read_gtfs_file(folder + '/stop_times.txt')
-    print('stop_times.txt contains ' + str(reader[1]) + ' lines.')
-    for data in reader[0]:
+    progress = ProgressBar(reader[1], 'stop_times.txt')
+    for line_number, data in enumerate(reader[0]):
+        progress.write()
         try:
             stop = Stop.get(
                 stop_id=data['stop_id'],
@@ -202,6 +214,7 @@ def read_stop_times_txt(folder, feed):
         st.feed = feed
 
         st.save()
+    progress.clear('All stop times saved', leave_bar=True)
 
 
 def read_calendar_dates_txt(folder, feed):
