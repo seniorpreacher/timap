@@ -220,3 +220,14 @@ def read_stop_times_txt(folder, feed):
 def read_calendar_dates_txt(folder, feed):
     data = read_gtfs_file(folder + '/calendar_dates.txt')
     print(data)
+
+
+def connect_routes_to_stops():
+    routes = Route.select()
+    progress = ProgressBar(routes.count(), 'Routes «» Stops')
+    for route in routes:
+        progress.write(suffix=route.short_name)
+        for trip in route.trips:
+            for st in trip.stop_times:
+                if route not in st.stop.routes:
+                    st.stop.routes.add(route)

@@ -88,6 +88,8 @@ def update_from_feed(feed_id: str):
     if 'trips.txt' in extracted_txt_files: gtfs.read_trips_txt(ZIP_EXTRACT_FOLDER, feed)
     if 'stop_times.txt' in extracted_txt_files: gtfs.read_stop_times_txt(ZIP_EXTRACT_FOLDER, feed)
 
+    gtfs.connect_routes_to_stops()
+
     # if 'calendar_dates.txt' in extracted_txt_files: gtfs.read_calendar_dates_txt(ZIP_EXTRACT_FOLDER, feed)
 
     shutil.rmtree(ZIP_EXTRACT_FOLDER)

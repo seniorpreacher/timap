@@ -7,7 +7,7 @@ from backend.models.feed import Feed
 
 class Route(Model):
     id = PrimaryKeyField()
-    agency = ForeignKeyField(Agency, null=True)
+    agency = ForeignKeyField(Agency, null=True, related_name="routes")
     route_id = BigIntegerField(null=False)
     short_name = CharField(null=False)
     long_name = CharField(null=False)
