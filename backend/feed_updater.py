@@ -4,6 +4,7 @@ import shutil
 from zipfile import ZipFile
 
 import requests
+from py2neo import Node, Relationship
 
 from backend import connection_manager, gtfs
 from backend.models.feed import Feed
@@ -104,11 +105,52 @@ def download_file(url, feed_id):
     return local_filename
 
 
+def generate_graph():
+    graph = connection_manager.graph
+
+    # clear_graph
+    graph.delete_all()
+
+    for feed in [Feed.get(feed_id='mvk-zrt/839')]: #.select():
+        progress = ProgressBar(len(feed.stops), 'Stops')
+        for stop in feed.stops:
+            progress.write(suffix=stop.name)
+
+            stop_node = graph.find_one('Stop', property_key='id', property_value=stop.id)
+            if stop_node is None:
+                stop_node = Node(
+                    "Stop",
+                    id=stop.id,
+                    stop_id=stop.stop_id,
+                    name=stop.name,
+                    lat=stop.lat,
+                    lng=stop.lng,
+                    timezone=stop.timezone,
+                )
+                graph.create(stop_node)
+
+            for route in stop.routes:
+                route_node = graph.find_one('Route', property_key='id', property_value=route.id)
+                if route_node is None:
+                    route_node = Node(
+                        "Route",
+                        id=route.id,
+                        route_id=route.route_id,
+                        short_name=route.short_name,
+                        type=route.type,
+                        route_color=route.route_color,
+                        route_text_color=route.route_text_color,
+                    )
+                    graph.create(route_node)
+                graph.create(Relationship(stop_node, 'BELONGS_TO', route_node))
+
+
 def sample_data():
     return json.load(open('mocks/feeds.json', encoding='UTF-8'))
 
 
 if __name__ == '__main__':
     connection_manager.init_db()
-    get_all_feeds()
-    # update_from_feed('mvk-zrt/839')
+    # get_all_feeds()
+    update_from_feed('mvk-zrt/839')
+    generate_graph()

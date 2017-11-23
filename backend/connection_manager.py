@@ -1,12 +1,20 @@
 import os
 
 from playhouse.postgres_ext import PostgresqlExtDatabase
+from py2neo import Graph
 
 db = PostgresqlExtDatabase(
     os.environ.get('MY_PSQL_DBNAME'),
     user=os.environ.get('MY_PSQL_USER'),
     password=os.environ.get('MY_PSQL_PASSWORD'),
     register_hstore=False,
+)
+
+graph = Graph(
+    secure=False,
+    bolt=True,
+    user='neo4j',
+    password='password',
 )
 
 
