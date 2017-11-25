@@ -44,7 +44,7 @@ class ProgressBar:
                 suffix=suffix
             ))
 
-    def clear(self, text='', leave_bar=False):
+    def clear(self, text='', leave_bar=True):
         if leave_bar:
             sys.stdout.write('\r\n')
             sys.stdout.flush()

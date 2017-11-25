@@ -89,6 +89,7 @@ def update_from_feed(feed_id: str):
     if 'trips.txt' in extracted_txt_files: gtfs.read_trips_txt(ZIP_EXTRACT_FOLDER, feed)
     if 'stop_times.txt' in extracted_txt_files: gtfs.read_stop_times_txt(ZIP_EXTRACT_FOLDER, feed)
 
+    gtfs.simplify_stops()
     gtfs.connect_routes_to_stops()
 
     # if 'calendar_dates.txt' in extracted_txt_files: gtfs.read_calendar_dates_txt(ZIP_EXTRACT_FOLDER, feed)
@@ -112,7 +113,7 @@ def generate_graph():
     graph.delete_all()
 
     for feed in [Feed.get(feed_id='mvk-zrt/839')]: #.select():
-        progress = ProgressBar(len(feed.stops), 'Stops')
+        progress = ProgressBar(len(feed.stops), 'Graph for ' + feed.city_name)
         for stop in feed.stops:
             progress.write(suffix=stop.name)
 
@@ -143,6 +144,7 @@ def generate_graph():
                     )
                     graph.create(route_node)
                 graph.create(Relationship(stop_node, 'BELONGS_TO', route_node))
+        progress.clear('Graph nodes generated for ' + feed.city_name)
 
 
 def sample_data():

@@ -1,5 +1,6 @@
 import csv
 
+from backend.connection_manager import db
 from backend.models.agency import Agency
 from backend.models.progressbar import ProgressBar
 from backend.models.route import Route
@@ -231,3 +232,83 @@ def connect_routes_to_stops():
             for st in trip.stop_times:
                 if route not in st.stop.routes:
                     st.stop.routes.add(route)
+    progress.clear('Routes and Stops connected', leave_bar=True)
+
+
+def simplify_stops():
+    from peewee import DataError
+
+    stops = Stop.select()
+    neighbour_list = []
+    progress = ProgressBar(stops.count(), 'Finding duplicates')
+    for stop in stops:
+        progress.write()
+        try:
+            cursor = db.execute_sql('''
+                SELECT
+                    stop.id,
+                    stop.name,
+                    %(distance_unit)s * DEGREES(ACOS(COS(RADIANS(%(lat)s))
+                                     * COS(RADIANS(stop.lat))
+                                     * COS(RADIANS(%(lng)s - stop.lng))
+                                     + SIN(RADIANS(%(lat)s))
+                                     * SIN(RADIANS(stop.lat)))) AS distance
+                FROM stop
+    
+                WHERE stop.lat
+                      BETWEEN %(lat)s - (%(radius)s / %(distance_unit)s)
+                      AND %(lat)s + (%(radius)s / %(distance_unit)s)
+                      AND stop.lng
+                      BETWEEN %(lng)s - (%(radius)s / (%(distance_unit)s * COS(RADIANS(%(lat)s))))
+                      AND %(lng)s + (%(radius)s / (%(distance_unit)s * COS(RADIANS(%(lat)s))))
+                      AND stop.name = %(_name)s
+                      AND stop.id <> %(_id)s
+            ''', {
+                "lat": stop.lat,
+                "lng": stop.lng,
+                "radius": 0.75,
+                "distance_unit": 111.045,
+                "_id": stop.id,
+                "_name": stop.name.strip(),
+            })
+
+            all_neighbours = cursor.fetchall()
+            if len(all_neighbours) > 0:
+                combo = [s[0] for s in all_neighbours]
+                combo.append(stop.id)
+                neighbour_list.append(sorted(combo))
+        except DataError:
+            continue
+        except Exception:
+            db.rollback()
+            continue
+
+    progress.clear()
+
+    uniquify = []
+    for elem in neighbour_list:
+        if elem not in uniquify:
+            uniquify.append(elem)
+
+    progress = ProgressBar(len(neighbour_list), 'Resolving duplications')
+
+    for duplicated_stops in neighbour_list:
+        stop = Stop.get(id=duplicated_stops[0])
+        progress.write(suffix=stop.name)
+
+        for duplicate_id in duplicated_stops[1:]:
+            try:
+                duplicate = Stop.get(id=duplicate_id)
+                for st in duplicate.stop_times:
+                    st.stop = stop
+                    st.save()
+                for sr in duplicate.routes:
+                    sr.stops.remove(duplicate)
+                    if stop not in sr.stops:
+                        sr.stops.add(stop)
+                    sr.save()
+                duplicate.delete_instance()
+            except Stop.DoesNotExist:
+                pass
+
+    progress.clear('All duplicates resolved')
