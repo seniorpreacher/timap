@@ -5,8 +5,8 @@ from datetime import datetime
 
 
 class ProgressBar:
-    MAX_PREFIX_LENGTH = 18
-    MAX_SUFFIX_LENGTH = 18
+    MAX_PREFIX_LENGTH = 24
+    MAX_SUFFIX_LENGTH = 24
     first_run = True
     total = 0
     count = 0

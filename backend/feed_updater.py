@@ -9,6 +9,7 @@ from py2neo import Node, Relationship
 from backend import connection_manager, gtfs
 from backend.models.feed import Feed
 from backend.models.progressbar import ProgressBar
+from backend.models.stop_time import StopTime
 
 ZIP_EXTRACT_FOLDER = 'zip_content'
 
@@ -113,7 +114,7 @@ def generate_graph():
     graph.delete_all()
 
     for feed in [Feed.get(feed_id='mvk-zrt/839')]: #.select():
-        progress = ProgressBar(len(feed.stops), 'Graph for ' + feed.city_name)
+        progress = ProgressBar(len(feed.stops), 'Stop nodes for ' + feed.city_name)
         for stop in feed.stops:
             progress.write(suffix=stop.name)
 
@@ -130,20 +131,64 @@ def generate_graph():
                 )
                 graph.create(stop_node)
 
-            for route in stop.routes:
-                route_node = graph.find_one('Route', property_key='id', property_value=route.id)
-                if route_node is None:
-                    route_node = Node(
-                        "Route",
-                        id=route.id,
-                        route_id=route.route_id,
-                        short_name=route.short_name,
-                        type=route.type,
-                        route_color=route.route_color,
-                        route_text_color=route.route_text_color,
-                    )
-                    graph.create(route_node)
-                graph.create(Relationship(stop_node, 'BELONGS_TO', route_node))
+                # for route in stop.routes:
+                #    route_node = graph.find_one('Route', property_key='id', property_value=route.id)
+                #    if route_node is None:
+                #        route_node = Node(
+                #            "Route",
+                #            id=route.id,
+                #            route_id=route.route_id,
+                #            short_name=route.short_name,
+                #            type=route.type,
+                #            route_color=route.route_color,
+                #            route_text_color=route.route_text_color,
+                #        )
+                #        graph.create(route_node)
+                #    graph.create(Relationship(stop_node, 'BELONGS_TO', route_node))
+
+        progress.clear('Nodes created')
+        progress = ProgressBar(len(feed.stops), 'Connecting Nodes')
+
+        for stop in feed.stops:
+            progress.write(suffix=stop.name)
+            stop_node = graph.find_one('Stop', property_key='id', property_value=stop.id)
+
+            saved_routes = []
+
+            for st in stop.stop_times:
+                if st.trip.route.id not in saved_routes:
+                    try:
+                        prev_stop_time = StopTime.get(trip=st.trip, stop_sequence=st.stop_sequence - 1)
+                        prev_stop = prev_stop_time.stop
+                        travel_time = st.arrival_time - prev_stop_time.arrival_time
+
+                        neighbour_node = graph.find_one('Stop', property_key='id', property_value=prev_stop.id)
+                        graph.create(
+                            Relationship(stop_node, 'CONNECTED_TO', neighbour_node,
+                                         route=st.trip.route.short_name,
+                                         travel_time=(travel_time.total_seconds() % 3600) // 60)
+                        )
+                        saved_routes.append(st.trip.route.id)
+
+                    except StopTime.DoesNotExist:
+                        pass
+
+                    try:
+                        next_stop_time = StopTime.get(trip=st.trip, stop_sequence=st.stop_sequence + 1)
+                        next_stop = next_stop_time.stop
+                        travel_time = st.arrival_time - next_stop_time.arrival_time
+
+                        neighbour_node = graph.find_one('Stop', property_key='id', property_value=next_stop.id)
+                        graph.create(
+                            Relationship(stop_node, 'CONNECTED_TO', neighbour_node,
+                                         route=st.trip.route.short_name,
+                                         travel_time=(travel_time.total_seconds() % 3600) // 60)
+                        )
+                        saved_routes.append(st.trip.route.id)
+
+                    except StopTime.DoesNotExist:
+                        pass
+
         progress.clear('Graph nodes generated for ' + feed.city_name)
 
 
@@ -154,5 +199,5 @@ def sample_data():
 if __name__ == '__main__':
     connection_manager.init_db()
     # get_all_feeds()
-    update_from_feed('mvk-zrt/839')
+    # update_from_feed('mvk-zrt/839')
     generate_graph()

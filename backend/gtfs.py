@@ -244,6 +244,8 @@ def simplify_stops():
     for stop in stops:
         progress.write()
         try:
+            # source: https://www.plumislandmedia.net/mysql/haversine-mysql-nearest-loc/
+
             cursor = db.execute_sql('''
                 SELECT
                     stop.id,
