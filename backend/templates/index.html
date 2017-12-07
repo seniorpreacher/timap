@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Timap</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet'/>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #refresh {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<button id="refresh">Refresh</button>
+<div id='map'></div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuaWVsc2FsYW1vbiIsImEiOiJjajlib3ZldWQxZmlsMzNvNzluZzRvdzlyIn0.t-mRniAFQ6HlDXUy2n888w';
+
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v9',
+        center: [{{ center_coords.lng }}, {{ center_coords.lat }}],
+        zoom: 11
+    });
+
+    var url = '/api/get-geojson';
+    map.on('load', function () {
+        //window.setInterval(function () {
+        //    map.getSource('api').setData(url);
+        //}, 2000);
+
+        map.addSource('api', {type: 'geojson', data: url});
+        map.addLayer({
+            'id': 'stroke',
+            'type': 'line',
+            'source': 'api',
+            'layout': {
+                'line-cap': 'round',
+                'line-join': 'round',
+                'line-round-limit': 1.1,
+            },
+            'paint': {
+                'line-opacity': 0.8,
+                'line-color': '#993333',
+                'line-width': 2,
+            }
+        });
+        map.addLayer({
+            'id': 'fill',
+            'type': 'fill',
+            'source': 'api',
+            'paint': {
+                'fill-opacity': 0.2,
+                'fill-color': '#995555',
+            }
+        });
+        map.getSource('api').setData(url);
+    });
+
+    document.getElementById('refresh').addEventListener('click', (e) = > {
+        map.getSource('api').setData(url);
+    })
+</script>
+
+</body>
+</html>
