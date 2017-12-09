@@ -6,6 +6,9 @@
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet'/>
+    <script>
+        window.center_coords = [{{ center_coords.lng }}, {{ center_coords.lat }}];
+    </script>
     <style>
         body {
             margin: 0;
@@ -34,50 +37,60 @@
 <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuaWVsc2FsYW1vbiIsImEiOiJjajlib3ZldWQxZmlsMzNvNzluZzRvdzlyIn0.t-mRniAFQ6HlDXUy2n888w';
 
-    var map = new mapboxgl.Map({
+    const map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v9',
-        center: [{{ center_coords.lng }}, {{ center_coords.lat }}],
+        //style: 'mapbox://styles/mapbox/streets-v9',
+        style: 'mapbox://styles/danielsalamon/cjax404w44feb2qst82h601cm',
+        center: center_coords,
         zoom: 11
     });
 
-    var url = '/api/get-geojson';
+    const url = '/api/get-geojson';
     map.on('load', function () {
-        //window.setInterval(function () {
-        //    map.getSource('api').setData(url);
-        //}, 2000);
-
-        map.addSource('api', {type: 'geojson', data: url});
+        map.addSource('api-15', {type: 'geojson', data: url});
         map.addLayer({
-            'id': 'stroke',
+            'id': 'stroke-15',
             'type': 'line',
-            'source': 'api',
+            'source': 'api-15',
             'layout': {
                 'line-cap': 'round',
                 'line-join': 'round',
-                'line-round-limit': 1.1,
+                'line-round-limit': 1.1
             },
             'paint': {
                 'line-opacity': 0.8,
                 'line-color': '#993333',
-                'line-width': 2,
+                'line-width': 2
             }
         });
         map.addLayer({
-            'id': 'fill',
+            'id': 'fill-15',
             'type': 'fill',
-            'source': 'api',
+            'source': 'api-15',
             'paint': {
                 'fill-opacity': 0.2,
-                'fill-color': '#995555',
+                'fill-color': '#995555'
             }
         });
-        map.getSource('api').setData(url);
     });
 
-    document.getElementById('refresh').addEventListener('click', (e) = > {
-        map.getSource('api').setData(url);
-    })
+    const getPolygon = async () => (await fetch('/api/get-geojson')).json();
+
+    document.getElementById('refresh').addEventListener('click', async () => {
+
+        const mapData = await getPolygon();
+        console.log(mapData);
+
+
+        map.getSource('api-15').setData({
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "properties": {},
+                "geometry": mapData
+            }]
+        });
+    });
 </script>
 
 </body>
