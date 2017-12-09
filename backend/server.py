@@ -1,7 +1,7 @@
 from random import randint
 
 import pyproj
-from flask import Flask, render_template, json
+from flask import Flask, render_template, json, request
 from peewee import fn
 from shapely.geometry import Point, Polygon, mapping
 
@@ -59,6 +59,8 @@ fn.Avg(Employee.salary)
 def route_api_geojson():
     radius = 1000
     stops = Stop.select().where(Stop.feed == Feed.get(id=main_feed_id))
+
+    print(request.args.get('lat'), request.args.get('lng'))
 
     nth_of_stop = randint(0, 20)
     walking_shape = Circle(stops[nth_of_stop].lng, stops[nth_of_stop].lat, radius).get_polygon()
