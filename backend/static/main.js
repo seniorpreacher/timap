@@ -3,10 +3,10 @@ window.run = (mapboxgl, center_coords) => {
 
     const map = new mapboxgl.Map({
         container: 'map',
-        //style: 'mapbox://styles/mapbox/streets-v9',
-        style: 'mapbox://styles/danielsalamon/cjax404w44feb2qst82h601cm',
+        style: 'mapbox://styles/mapbox/streets-v9',
+        //style: 'mapbox://styles/danielsalamon/cjax404w44feb2qst82h601cm',
         center: center_coords,
-        minZoom: 9,
+        minZoom: 10,
         zoom: 11
     });
 
@@ -28,7 +28,8 @@ window.run = (mapboxgl, center_coords) => {
     const getPolygon = async (lat, lng) => (await fetch(`/api/get-geojson?lat=${lat}&lng=${lng}`)).json();
 
     const updatePolygon = (lat, lng) => {
-        getPolygon(lat, lng).then((mapData) => map.getSource('api-15').setData({
+        getPolygon(lat, lng).then((mapData) =>
+            map.getSource('api-15').setData({
             "type": "FeatureCollection",
             "features": [{
                 "type": "Feature",
@@ -67,7 +68,6 @@ window.run = (mapboxgl, center_coords) => {
         map.off('mousemove', onMove);
     };
 
-    const url = '/api/get-geojson';
     map.on('load', function () {
 
         // Add cursor to map
@@ -105,7 +105,7 @@ window.run = (mapboxgl, center_coords) => {
         })();
 
 
-        map.addSource('api-15', {type: 'geojson', data: url});
+        map.addSource('api-15', {type: 'geojson'});
         map.addLayer({
             'id': 'stroke-15',
             'type': 'line',

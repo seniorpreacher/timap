@@ -19,5 +19,37 @@ class Stop(Model):
     def __str__(self) -> str:
         return '{s.id} - {s.stop_id} ({s.name})'.format(s=self)
 
+    @classmethod
+    def get_nearby(cls, lat, lng, distance):
+        cursor = db.execute_sql('''
+                        SELECT
+                            stop.id AS id,
+                            %(distance_unit)s * DEGREES(ACOS(COS(RADIANS(%(lat)s))
+                                             * COS(RADIANS(stop.lat))
+                                             * COS(RADIANS(%(lng)s - stop.lng))
+                                             + SIN(RADIANS(%(lat)s))
+                                             * SIN(RADIANS(stop.lat)))) AS distance
+                        FROM stop
+
+                        WHERE stop.lat
+                              BETWEEN %(lat)s - (%(radius)s / %(distance_unit)s)
+                              AND %(lat)s + (%(radius)s / %(distance_unit)s)
+                              AND stop.lng
+                              BETWEEN %(lng)s - (%(radius)s / (%(distance_unit)s * COS(RADIANS(%(lat)s))))
+                              AND %(lng)s + (%(radius)s / (%(distance_unit)s * COS(RADIANS(%(lat)s))))
+                    ''', {
+            "lat": lat,
+            "lng": lng,
+            "radius": distance / 1000,
+            "distance_unit": 111.045,
+        })
+
+        result = []
+
+        for nearby in cursor.fetchall():
+            result.append(cls.get(id=nearby[0]))
+
+        return result
+
     class Meta:
         database = db
