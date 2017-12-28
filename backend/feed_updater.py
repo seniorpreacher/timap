@@ -198,6 +198,6 @@ def sample_data():
 
 if __name__ == '__main__':
     connection_manager.init_db()
-    # get_all_feeds()
-    # update_from_feed('mvk-zrt/839')
+    get_all_feeds()
+    update_from_feed('mvk-zrt/839')
     generate_graph()

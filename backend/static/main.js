@@ -3,8 +3,9 @@ window.run = (mapboxgl, center_coords) => {
 
     const map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v9',
+        //style: 'mapbox://styles/mapbox/streets-v9',
         //style: 'mapbox://styles/danielsalamon/cjax404w44feb2qst82h601cm',
+        style: 'mapbox://styles/danielsalamon/cjb3yv17s07qb2rnr5l7p34cg',
         center: center_coords,
         minZoom: 10,
         zoom: 11
@@ -25,18 +26,33 @@ window.run = (mapboxgl, center_coords) => {
         };
 
 
-    const getPolygon = async (lat, lng) => (await fetch(`/api/get-geojson?lat=${lat}&lng=${lng}`)).json();
+    const getPolygon = async (lat, lng, step) => (await fetch(`/api/get-geojson-${step}?lat=${lat}&lng=${lng}`)).json();
 
     const updatePolygon = (lat, lng) => {
-        getPolygon(lat, lng).then((mapData) =>
+        getPolygon(lat, lng, 15).then((mapData) => {
             map.getSource('api-15').setData({
-            "type": "FeatureCollection",
-            "features": [{
-                "type": "Feature",
-                "properties": {},
-                "geometry": mapData
-            }]
-        })).catch((e) => console.error(e));
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": mapData
+                }]
+            });
+
+            getPolygon(lat, lng, 30).then((mapData) =>
+                map.getSource('api-30').setData({
+                    "type": "FeatureCollection",
+                    "features": [{
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": mapData
+                    }]
+                })).catch((e) =>
+                console.error(e)
+            );
+        }).catch((e) =>
+            console.error(e)
+        );
     };
 
     const mouseDown = () => {
@@ -105,7 +121,7 @@ window.run = (mapboxgl, center_coords) => {
         })();
 
 
-        map.addSource('api-15', {type: 'geojson'});
+        map.addSource('api-15', {type: 'geojson', data: {"type": "Point", "coordinates": [0, 0]}});
         map.addLayer({
             'id': 'stroke-15',
             'type': 'line',
@@ -117,7 +133,7 @@ window.run = (mapboxgl, center_coords) => {
             },
             'paint': {
                 'line-opacity': 0.8,
-                'line-color': '#993333',
+                'line-color': '#df0024',
                 'line-width': 2
             }
         });
@@ -127,7 +143,34 @@ window.run = (mapboxgl, center_coords) => {
             'source': 'api-15',
             'paint': {
                 'fill-opacity': 0.2,
-                'fill-color': '#995555'
+                'fill-color': '#df0024'
+            }
+        });
+
+
+        map.addSource('api-30', {type: 'geojson', data: {"type": "Point", "coordinates": [0, 0]}});
+        map.addLayer({
+            'id': 'stroke-30',
+            'type': 'line',
+            'source': 'api-30',
+            'layout': {
+                'line-cap': 'round',
+                'line-join': 'round',
+                'line-round-limit': 1.1
+            },
+            'paint': {
+                'line-opacity': 0.8,
+                'line-color': '#00a9e5',
+                'line-width': 2
+            }
+        });
+        map.addLayer({
+            'id': 'fill-30',
+            'type': 'fill',
+            'source': 'api-30',
+            'paint': {
+                'fill-opacity': 0.2,
+                'fill-color': '#00a9e5'
             }
         });
     });

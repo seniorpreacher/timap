@@ -95,27 +95,30 @@ def route_index():
     return render_template('index.html', center_coords=center_coords)
 
 
-@app.route('/api/get-geojson')
-def route_api_geojson():
+@app.route('/api/get-geojson-<int:step>')
+def route_api_geojson(step):
     step_minutes = 15
     buffer_for_public_transport = 4  # magic, if it's more then 4 minutes it worth to wait the bus
     # steps = range(step_minutes, (4 * step_minutes) + 1, step_minutes)
-    steps = [15]
+    steps = [int(step)]
     starting_point = Intersection(float(request.args.get('lat')), float(request.args.get('lng')), 0)
     intersections = [starting_point]
+    result = []
 
     # find nearby stops to the starting_point
     for minute in steps:
         for point in intersections:
             travel_with_trasport = False
+            follow_transport = False
+            time_range_for_search = minute - point.delay
 
             # Set if we should take public transport
-            if point.stop_id is not None and step_minutes - point.delay > buffer_for_public_transport:
+            if point.stop_id is not None and time_range_for_search > buffer_for_public_transport:
                 travel_with_trasport = True
 
             # When we walk
             if not travel_with_trasport:
-                nearby_stops = Stop.get_nearby(point.lat, point.lng, (minute - point.delay) * WALKING_METERS_PER_MINUTE)
+                nearby_stops = Stop.get_nearby(point.lat, point.lng, time_range_for_search * WALKING_METERS_PER_MINUTE)
 
                 for nearby_stop in nearby_stops:
                     distance_in_minute = math.ceil(get_distance(
@@ -134,9 +137,15 @@ def route_api_geojson():
                         )
                         print(str(nearby_stop) + ' is in ' + str(distance_in_minute) + ' min range')
 
+                    if time_range_for_search - distance_in_minute > buffer_for_public_transport:
+                        follow_transport = True
+                        time_range_for_search -= distance_in_minute - buffer_for_public_transport
+
             else:
-                # if step_minutes - distance_in_minute > buffer_for_public_transport:
-                reachable_stops = get_reachable_stops(point.stop_id, (minute - point.delay))
+                follow_transport = True
+
+            if follow_transport:
+                reachable_stops = get_reachable_stops(point.stop_id, time_range_for_search)
 
                 for reachable_stop in reachable_stops:
                     is_new = True
@@ -144,19 +153,19 @@ def route_api_geojson():
                         if stored_intersection.stop_id == reachable_stop['stop']['id']:
                             is_new = False
                     if is_new:
+                        travel_time = int((minute - time_range_for_search) + reachable_stop['travel_time'])
                         intersections.append(
                             Intersection(
                                 lat=reachable_stop['stop']['lat'],
                                 lng=reachable_stop['stop']['lng'],
-                                delay=int(distance_in_minute + reachable_stop['travel_time']),
+                                delay=travel_time,
                                 stop_id=reachable_stop['stop']['id']
                             )
                         )
-                        print(reachable_stop['stop']['name'] + ' is in ' + str(
-                            distance_in_minute + reachable_stop['travel_time']) + ' min range')
+                        print(reachable_stop['stop']['name'] + ' is in ' + str(travel_time) + ' min range')
 
     # walking_shape = Circle(intersections[0].lng, intersections[0].lat, (steps[-1] - intersections[0].delay) * WALKING_METERS_PER_MINUTE).get_polygon()
-    walking_shape = Circle(intersections[0].lng, intersections[0].lat, WALKING_METERS_PER_MINUTE).get_polygon()
+    walking_shape = Circle(intersections[0].lng, intersections[0].lat, step * WALKING_METERS_PER_MINUTE).get_polygon()
 
     for point in intersections[1:]:
         try:
